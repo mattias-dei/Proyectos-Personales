@@ -1,0 +1,224 @@
+{
+  "entities": {
+    "UserSettings": {
+      "title": "UserSettings",
+      "description": "Cloud-synced ESP32 buzzer playback, lighting, notification, and winter dark mode preferences for a user.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID."
+        },
+        "tempoBpm": {
+          "type": "integer",
+          "description": "Playback tempo in beats per minute (40-240)."
+        },
+        "volumePercent": {
+          "type": "integer",
+          "description": "Buzzer volume percentage (0-100)."
+        },
+        "lightsEnabled": {
+          "type": "boolean",
+          "description": "Whether festive blinking lights are active."
+        },
+        "lightsPattern": {
+          "type": "string",
+          "enum": ["twinkle", "chase", "warm_glow", "party"],
+          "description": "Active blinking light pattern."
+        },
+        "festiveSoundsEnabled": {
+          "type": "boolean",
+          "description": "Whether UI festive chime sounds are enabled."
+        },
+        "darkWinterMode": {
+          "type": "boolean",
+          "description": "Dark mode optimized for winter nights."
+        },
+        "autoOffMinutes": {
+          "type": "integer",
+          "description": "Programmable auto-off timer duration in minutes (0-240)."
+        },
+        "notifEnabled": {
+          "type": "boolean",
+          "description": "Whether customizable festive notifications are enabled."
+        },
+        "notifTitle": {
+          "type": "string",
+          "description": "Custom notification title."
+        },
+        "notifMessage": {
+          "type": "string",
+          "description": "Custom notification body text."
+        },
+        "notifHour": {
+          "type": "integer",
+          "description": "Scheduled notification hour (0-23)."
+        },
+        "notifMinute": {
+          "type": "integer",
+          "description": "Scheduled notification minute (0-59)."
+        },
+        "preferredDeviceName": {
+          "type": "string",
+          "description": "Last paired ESP32 Bluetooth device name."
+        },
+        "preferredDeviceAddress": {
+          "type": "string",
+          "description": "Last paired ESP32 Bluetooth MAC address."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when settings were created (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when settings were last updated (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "tempoBpm",
+        "volumePercent",
+        "lightsEnabled",
+        "lightsPattern",
+        "festiveSoundsEnabled",
+        "darkWinterMode",
+        "autoOffMinutes",
+        "notifEnabled",
+        "notifTitle",
+        "notifMessage",
+        "notifHour",
+        "notifMinute",
+        "preferredDeviceName",
+        "preferredDeviceAddress",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CustomMelody": {
+      "title": "CustomMelody",
+      "description": "Custom buzzer melody imported from an external file and synced across user devices.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID."
+        },
+        "title": {
+          "type": "string",
+          "description": "Song title."
+        },
+        "artistOrSource": {
+          "type": "string",
+          "description": "Artist or source attribution."
+        },
+        "defaultBpm": {
+          "type": "integer",
+          "description": "Default tempo in BPM (40-240)."
+        },
+        "frequencies": {
+          "type": "array",
+          "description": "Note frequencies in Hz (0 for rest), up to 400 notes."
+        },
+        "durationsMs": {
+          "type": "array",
+          "description": "Note durations in milliseconds, aligned with frequencies."
+        },
+        "sourceFileName": {
+          "type": "string",
+          "description": "Original imported filename."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when melody was created (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when melody was last updated (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "title",
+        "artistOrSource",
+        "defaultBpm",
+        "frequencies",
+        "durationsMs",
+        "sourceFileName",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ThemedPlaylist": {
+      "title": "ThemedPlaylist",
+      "description": "External streaming service Christmas playlist link saved by the user.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID."
+        },
+        "title": {
+          "type": "string",
+          "description": "Playlist name."
+        },
+        "platform": {
+          "type": "string",
+          "enum": ["spotify", "youtube_music", "apple_music", "other"],
+          "description": "Streaming platform identifier."
+        },
+        "url": {
+          "type": "string",
+          "description": "Deep link or HTTPS playlist URL."
+        },
+        "description": {
+          "type": "string",
+          "description": "Short festive mood description."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when playlist was created (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when playlist was last updated (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "title",
+        "platform",
+        "url",
+        "description",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/settings/{settingId}": {
+      "schema": {
+        "$ref": "#/entities/UserSettings"
+      },
+      "description": "User-scoped ESP32 buzzer, lighting, notification, and theme preferences."
+    },
+    "/users/{userId}/melodies/{melodyId}": {
+      "schema": {
+        "$ref": "#/entities/CustomMelody"
+      },
+      "description": "User-scoped custom Christmas melodies imported from external files."
+    },
+    "/users/{userId}/playlists/{playlistId}": {
+      "schema": {
+        "$ref": "#/entities/ThemedPlaylist"
+      },
+      "description": "User-scoped themed Christmas music streaming playlists."
+    }
+  }
+}

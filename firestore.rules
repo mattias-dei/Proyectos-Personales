@@ -1,0 +1,190 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global safety net: default-deny all reads and writes
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidUserSettings(data) {
+      return data.userId is string &&
+             data.userId.size() >= 1 &&
+             data.userId.size() <= 128 &&
+             data.userId == request.auth.uid &&
+             data.tempoBpm is int && data.tempoBpm >= 40 && data.tempoBpm <= 240 &&
+             data.volumePercent is int && data.volumePercent >= 0 && data.volumePercent <= 100 &&
+             data.lightsEnabled is bool &&
+             data.lightsPattern is string &&
+             data.lightsPattern in ['twinkle', 'chase', 'warm_glow', 'party'] &&
+             data.festiveSoundsEnabled is bool &&
+             data.darkWinterMode is bool &&
+             data.autoOffMinutes is int && data.autoOffMinutes >= 0 && data.autoOffMinutes <= 240 &&
+             data.notifEnabled is bool &&
+             data.notifTitle is string && data.notifTitle.size() >= 1 && data.notifTitle.size() <= 80 &&
+             data.notifMessage is string && data.notifMessage.size() >= 1 && data.notifMessage.size() <= 200 &&
+             data.notifHour is int && data.notifHour >= 0 && data.notifHour <= 23 &&
+             data.notifMinute is int && data.notifMinute >= 0 && data.notifMinute <= 59 &&
+             data.preferredDeviceName is string && data.preferredDeviceName.size() <= 64 &&
+             data.preferredDeviceAddress is string && data.preferredDeviceAddress.size() <= 64 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidCustomMelody(data) {
+      return data.userId is string &&
+             data.userId.size() >= 1 &&
+             data.userId.size() <= 128 &&
+             data.userId == request.auth.uid &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 80 &&
+             data.artistOrSource is string && data.artistOrSource.size() <= 80 &&
+             data.defaultBpm is int && data.defaultBpm >= 40 && data.defaultBpm <= 240 &&
+             data.frequencies is list &&
+             data.frequencies.size() >= 1 &&
+             data.frequencies.size() <= 400 &&
+             data.frequencies[0] is int &&
+             data.durationsMs is list &&
+             data.durationsMs.size() >= 1 &&
+             data.durationsMs.size() <= 400 &&
+             data.durationsMs[0] is int &&
+             data.frequencies.size() == data.durationsMs.size() &&
+             data.sourceFileName is string && data.sourceFileName.size() <= 100 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidThemedPlaylist(data) {
+      return data.userId is string &&
+             data.userId.size() >= 1 &&
+             data.userId.size() <= 128 &&
+             data.userId == request.auth.uid &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 80 &&
+             data.platform is string &&
+             data.platform in ['spotify', 'youtube_music', 'apple_music', 'other'] &&
+             data.url is string &&
+             data.url.size() >= 1 &&
+             data.url.size() <= 300 &&
+             (data.url.matches('^https://.*') || data.url.matches('^spotify:.*')) &&
+             data.description is string && data.description.size() <= 160 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    match /users/{userId}/settings/{settingId} {
+      allow get: if isOwner(userId) && isValidId(settingId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(settingId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'tempoBpm', 'volumePercent', 'lightsEnabled',
+                         'lightsPattern', 'festiveSoundsEnabled', 'darkWinterMode',
+                         'autoOffMinutes', 'notifEnabled', 'notifTitle', 'notifMessage',
+                         'notifHour', 'notifMinute', 'preferredDeviceName',
+                         'preferredDeviceAddress', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'tempoBpm', 'volumePercent', 'lightsEnabled',
+                         'lightsPattern', 'festiveSoundsEnabled', 'darkWinterMode',
+                         'autoOffMinutes', 'notifEnabled', 'notifTitle', 'notifMessage',
+                         'notifHour', 'notifMinute', 'preferredDeviceName',
+                         'preferredDeviceAddress', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidUserSettings(incoming());
+
+      allow update: if isOwner(userId) &&
+                       isValidId(settingId) &&
+                       isValidUserSettings(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'tempoBpm', 'volumePercent', 'lightsEnabled', 'lightsPattern',
+                         'festiveSoundsEnabled', 'darkWinterMode', 'autoOffMinutes',
+                         'notifEnabled', 'notifTitle', 'notifMessage', 'notifHour',
+                         'notifMinute', 'preferredDeviceName', 'preferredDeviceAddress',
+                         'updatedAt'
+                       ]);
+
+      allow delete: if isOwner(userId) && isValidId(settingId);
+    }
+
+    match /users/{userId}/melodies/{melodyId} {
+      allow get: if isOwner(userId) && isValidId(melodyId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(melodyId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'title', 'artistOrSource', 'defaultBpm',
+                         'frequencies', 'durationsMs', 'sourceFileName',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'title', 'artistOrSource', 'defaultBpm',
+                         'frequencies', 'durationsMs', 'sourceFileName',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidCustomMelody(incoming());
+
+      allow update: if isOwner(userId) &&
+                       isValidId(melodyId) &&
+                       isValidCustomMelody(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'title', 'artistOrSource', 'defaultBpm',
+                         'frequencies', 'durationsMs', 'sourceFileName', 'updatedAt'
+                       ]);
+
+      allow delete: if isOwner(userId) && isValidId(melodyId);
+    }
+
+    match /users/{userId}/playlists/{playlistId} {
+      allow get: if isOwner(userId) && isValidId(playlistId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(playlistId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'title', 'platform', 'url', 'description',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'title', 'platform', 'url', 'description',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidThemedPlaylist(incoming());
+
+      allow update: if isOwner(userId) &&
+                       isValidId(playlistId) &&
+                       isValidThemedPlaylist(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'title', 'platform', 'url', 'description', 'updatedAt'
+                       ]);
+
+      allow delete: if isOwner(userId) && isValidId(playlistId);
+    }
+  }
+}

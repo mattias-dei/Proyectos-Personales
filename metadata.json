@@ -1,0 +1,6 @@
+{
+  "name": "Navidad Buzzer",
+  "description": "Controlador Bluetooth para ESP32 y buzzer pasivo con villancicos, visualizador de frecuencia, temporizador, sincronización en la nube y widget navideño.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

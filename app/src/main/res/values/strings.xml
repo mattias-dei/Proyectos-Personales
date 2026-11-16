@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Navidad Buzzer</string>
+    <string name="widget_countdown_title">Cuenta Regresiva Navideña</string>
+    <string name="widget_countdown_description">Muestra los días y horas que faltan para Navidad y abre el controlador ESP32.</string>
+    <string name="auth_title">Navidad Buzzer ESP32</string>
+    <string name="auth_subtitle">Controla villancicos en tu buzzer pasivo vía Bluetooth y sincroniza tus melodías y ajustes en la nube.</string>
+    <string name="sign_in_google">Iniciar sesión con Google</string>
+    <string name="error_load_data">No pudimos cargar tus datos de la nube.</string>
+</resources>
